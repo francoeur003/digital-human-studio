@@ -1,9 +1,9 @@
 {
   "source": "demo-only",
   "avatars": [
-    { "id": "demo-lin", "name": "Lin", "image": "/demo/avatar-lin.svg", "source": "demo", "orientation": "portrait" },
-    { "id": "demo-mira", "name": "Mira", "image": "/demo/avatar-mira.svg", "source": "demo", "orientation": "portrait" },
-    { "id": "demo-noah", "name": "Noah", "image": "/demo/avatar-noah.svg", "source": "demo", "orientation": "portrait" },
-    { "id": "demo-aya", "name": "Aya", "image": "/demo/avatar-aya.svg", "source": "demo", "orientation": "portrait" }
+    { "id": "demo-lin", "name": "Lin · 商业表达", "image": "/demo/avatar-lin-v2.png", "source": "demo", "orientation": "portrait" },
+    { "id": "demo-mira", "name": "Mira · 生活教育", "image": "/demo/avatar-mira-v2.png", "source": "demo", "orientation": "portrait" },
+    { "id": "demo-noah", "name": "Noah · 科技解说", "image": "/demo/avatar-noah-v2.png", "source": "demo", "orientation": "portrait" },
+    { "id": "demo-aya", "name": "Aya · 知识专家", "image": "/demo/avatar-aya-v2.png", "source": "demo", "orientation": "portrait" }
   ]
 }

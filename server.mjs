@@ -882,7 +882,7 @@ async function handleApi(request, response, url) {
     const providers = await providerHealth();
     return sendJson(response, 200, envelope(true, {
       service: "digital-human-studio",
-      version: "0.4.0",
+      version: "0.4.1",
       providers,
       costGuard: { enabled: true, realGenerationRequiresConfirmation: true }
     }, { requestId }));

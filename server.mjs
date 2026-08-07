@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { execFileSync, spawn } from "node:child_process";
 import { copyFileSync, createReadStream, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { extname, join, normalize } from "node:path";
+import { arch, homedir, platform } from "node:os";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createServer } from "node:http";
 
@@ -20,7 +21,14 @@ const exampleLocalVoiceFile = join(projectRoot, "config", "local-voices.example.
 const customVoiceFile = join(dataRoot, "custom-voices.json");
 const port = Number(process.env.PORT || 4199);
 const host = process.env.HOST || "127.0.0.1";
-const voiceboxUrl = String(process.env.VOICEBOX_URL || "").replace(/\/$/, "");
+const configuredVoiceboxUrl = String(process.env.VOICEBOX_URL || "").replace(/\/$/, "");
+const voiceboxAutoDetectEnabled = process.env.VOICEBOX_DISABLE_AUTO_DETECT !== "1";
+const volcengineTtsAppId = process.env.VOLCENGINE_TTS_APP_ID || "";
+const volcengineTtsAccessToken = process.env.VOLCENGINE_TTS_ACCESS_TOKEN || "";
+const volcengineTtsResourceId = process.env.VOLCENGINE_TTS_RESOURCE_ID || "seed-tts-2.0";
+const volcengineTtsVoiceType = process.env.VOLCENGINE_TTS_VOICE_TYPE || "";
+const voiceboxOfficialUrl = "https://voicebox.sh/download";
+const voiceboxDocsUrl = "https://docs.voicebox.sh/overview/installation";
 const tasks = new Map();
 const idempotency = new Map();
 const rateWindow = new Map();
@@ -241,9 +249,74 @@ async function elevenFetch(path, options = {}) {
   return response;
 }
 
+function voiceboxDownloadUrl() {
+  if (platform() === "darwin" && arch() === "arm64") {
+    return "https://github.com/jamiepine/voicebox/releases/download/v0.5.0/Voicebox_0.5.0_aarch64.dmg";
+  }
+  if (platform() === "darwin") {
+    return "https://github.com/jamiepine/voicebox/releases/download/v0.5.0/Voicebox_0.5.0_x64.dmg";
+  }
+  if (platform() === "win32") {
+    return "https://github.com/jamiepine/voicebox/releases/download/v0.5.0/Voicebox_0.5.0_x64-setup.exe";
+  }
+  return voiceboxOfficialUrl;
+}
+
+let voiceboxDiscoveryCache = { expiresAt: 0, serviceUrl: "" };
+function discoverVoiceboxServiceUrl() {
+  if (configuredVoiceboxUrl) return configuredVoiceboxUrl;
+  if (!voiceboxAutoDetectEnabled) return "";
+  if (voiceboxDiscoveryCache.expiresAt > Date.now()) return voiceboxDiscoveryCache.serviceUrl;
+  let serviceUrl = "";
+  if (platform() === "darwin" && existsSync("/usr/sbin/lsof")) {
+    try {
+      const output = execFileSync("/usr/sbin/lsof", ["-nP", "-a", "-c", "voicebox-server", "-iTCP", "-sTCP:LISTEN", "-Fn"], {
+        encoding: "utf8",
+        timeout: 1800,
+        stdio: ["ignore", "pipe", "ignore"]
+      });
+      const match = output.match(/^n127\.0\.0\.1:(\d+)$/m);
+      if (match) serviceUrl = `http://127.0.0.1:${match[1]}`;
+    } catch {}
+  }
+  voiceboxDiscoveryCache = { expiresAt: Date.now() + 5000, serviceUrl };
+  return serviceUrl;
+}
+
+function detectVoiceboxInstallation() {
+  if (!voiceboxAutoDetectEnabled) return { appInstalled: false, modelDownloaded: false, dataDetected: false, serviceUrl: "", autoDetected: false };
+  const home = homedir();
+  const appCandidates = platform() === "darwin"
+    ? ["/Applications/Voicebox.app", join(home, "Applications", "Voicebox.app")]
+    : platform() === "win32"
+      ? [join(process.env.LOCALAPPDATA || "", "Programs", "Voicebox", "Voicebox.exe")]
+      : [];
+  const huggingFaceRoot = process.env.HUGGINGFACE_HUB_CACHE
+    || join(process.env.HF_HOME || join(home, ".cache", "huggingface"), "hub");
+  const modelCandidates = [
+    join(huggingFaceRoot, "models--mlx-community--Qwen3-TTS-12Hz-1.7B-Base-bf16"),
+    join(huggingFaceRoot, "models--Qwen--Qwen3-TTS-12Hz-1.7B-Base"),
+    join(huggingFaceRoot, "models--Qwen--Qwen3-TTS-12Hz-0.6B-Base")
+  ];
+  const dataCandidates = platform() === "darwin"
+    ? [join(home, "Library", "Application Support", "sh.voicebox.app")]
+    : platform() === "win32"
+      ? [join(process.env.APPDATA || "", "sh.voicebox.app")]
+      : [join(home, ".config", "sh.voicebox.app")];
+  const serviceUrl = discoverVoiceboxServiceUrl();
+  return {
+    appInstalled: appCandidates.some((path) => path && existsSync(path)),
+    modelDownloaded: modelCandidates.some((path) => existsSync(path)),
+    dataDetected: dataCandidates.some((path) => path && existsSync(path)),
+    serviceUrl,
+    autoDetected: !configuredVoiceboxUrl && Boolean(serviceUrl)
+  };
+}
+
 async function voiceboxFetch(path, options = {}) {
-  if (!voiceboxUrl) throw Object.assign(new Error("未配置本地语音服务"), { code: "VOICEBOX_NOT_CONFIGURED" });
-  const response = await fetch(`${voiceboxUrl}${path}`, {
+  const serviceUrl = discoverVoiceboxServiceUrl();
+  if (!serviceUrl) throw Object.assign(new Error("未检测到本地 Voicebox 服务"), { code: "VOICEBOX_NOT_CONFIGURED" });
+  const response = await fetch(`${serviceUrl}${path}`, {
     ...options,
     signal: AbortSignal.timeout(options.timeout || 15_000),
     headers: {
@@ -263,18 +336,56 @@ async function voiceboxFetch(path, options = {}) {
 }
 
 async function voiceboxHealth() {
-  if (!voiceboxUrl) return { configured: false, connected: false, state: "missing", modelDownloaded: false, modelLoaded: false };
+  const detected = detectVoiceboxInstallation();
+  if (!detected.serviceUrl) {
+    return {
+      configured: Boolean(configuredVoiceboxUrl),
+      connected: false,
+      state: detected.modelDownloaded ? "model_ready" : detected.appInstalled ? "app_installed" : "missing",
+      appInstalled: detected.appInstalled,
+      modelDownloaded: detected.modelDownloaded,
+      modelLoaded: false,
+      autoDetected: false,
+      recommendedModel: "Voicebox + Qwen3-TTS 1.7B",
+      downloadUrl: voiceboxDownloadUrl(),
+      officialUrl: voiceboxOfficialUrl,
+      docsUrl: voiceboxDocsUrl
+    };
+  }
   try {
     const response = await voiceboxFetch("/health", { timeout: 2500 });
     const health = await response.json();
-    return { configured: true, connected: true, state: "connected", modelDownloaded: Boolean(health.model_downloaded), modelLoaded: Boolean(health.model_loaded) };
+    return {
+      configured: Boolean(configuredVoiceboxUrl),
+      connected: true,
+      state: "connected",
+      appInstalled: detected.appInstalled,
+      modelDownloaded: Boolean(health.model_downloaded) || detected.modelDownloaded,
+      modelLoaded: Boolean(health.model_loaded),
+      autoDetected: detected.autoDetected,
+      recommendedModel: "Voicebox + Qwen3-TTS 1.7B",
+      downloadUrl: voiceboxDownloadUrl(),
+      officialUrl: voiceboxOfficialUrl,
+      docsUrl: voiceboxDocsUrl
+    };
   } catch (error) {
-    return { configured: true, connected: false, state: error.code || "not_running", modelDownloaded: true, modelLoaded: false };
+    return {
+      configured: Boolean(configuredVoiceboxUrl),
+      connected: false,
+      state: error.code || "not_running",
+      appInstalled: detected.appInstalled,
+      modelDownloaded: detected.modelDownloaded,
+      modelLoaded: false,
+      autoDetected: detected.autoDetected,
+      recommendedModel: "Voicebox + Qwen3-TTS 1.7B",
+      downloadUrl: voiceboxDownloadUrl(),
+      officialUrl: voiceboxOfficialUrl,
+      docsUrl: voiceboxDocsUrl
+    };
   }
 }
 
 async function ensureVoicebox() {
-  if (!voiceboxUrl) throw Object.assign(new Error("未配置本地语音服务"), { code: "VOICEBOX_NOT_CONFIGURED" });
   const health = await voiceboxHealth();
   if (health.connected) return health;
   throw Object.assign(new Error("本地语音服务未启动"), { code: "VOICEBOX_UNAVAILABLE", retryable: true });
@@ -294,6 +405,12 @@ async function providerHealth() {
   return {
     seedance2,
     elevenlabs,
+    volcengineSpeech: {
+      configured: Boolean(volcengineTtsAppId && volcengineTtsAccessToken && volcengineTtsVoiceType),
+      connected: false,
+      state: volcengineTtsAppId && volcengineTtsAccessToken && volcengineTtsVoiceType ? "configured_unverified" : "missing",
+      resourceId: volcengineTtsResourceId
+    },
     voicebox: await voiceboxHealth()
   };
 }
@@ -321,13 +438,43 @@ function integrationContract(providers) {
         id: "cloud-voice",
         name: "云端配音接口",
         provider: "ElevenLabs",
-        requirement: "recommended",
-        requirementLabel: "推荐",
+        requirement: "optional",
+        requirementLabel: "可选",
         configured: Boolean(providers.elevenlabs?.configured),
         connected: Boolean(providers.elevenlabs?.connected),
         configKeys: ["ELEVENLABS_API_KEY"],
         optionalConfigKeys: [],
+        officialUrl: "https://elevenlabs.io/pricing",
+        purchaseUrl: "https://elevenlabs.io/pricing",
         description: "用于加载账号音色与生成配音试听；不配置也可以浏览演示音色。"
+      },
+      {
+        id: "volcengine-seed-tts-2",
+        name: "火山语音大模型",
+        provider: "Doubao-Seed-TTS 2.0",
+        requirement: "optional",
+        requirementLabel: "可选",
+        configured: Boolean(providers.volcengineSpeech?.configured),
+        connected: false,
+        configKeys: ["VOLCENGINE_TTS_APP_ID", "VOLCENGINE_TTS_ACCESS_TOKEN", "VOLCENGINE_TTS_VOICE_TYPE"],
+        optionalConfigKeys: ["VOLCENGINE_TTS_RESOURCE_ID"],
+        officialUrl: "https://www.volcengine.com/products/Audio-editing-and-sound-processing",
+        purchaseUrl: "https://www.volcengine.com/docs/6561/1167802?lang=zh",
+        description: "支持豆包语音合成大模型、Doubao-Seed-TTS 2.0 公版音色与官方 API。"
+      },
+      {
+        id: "volcengine-seed-icl-2",
+        name: "火山声音复刻 2.0",
+        provider: "Doubao-Seed-ICL 2.0",
+        requirement: "optional",
+        requirementLabel: "可选",
+        configured: Boolean(providers.volcengineSpeech?.configured),
+        connected: false,
+        configKeys: ["VOLCENGINE_TTS_APP_ID", "VOLCENGINE_TTS_ACCESS_TOKEN", "VOLCENGINE_TTS_VOICE_TYPE"],
+        optionalConfigKeys: ["VOLCENGINE_TTS_RESOURCE_ID"],
+        officialUrl: "https://www.volcengine.com/product/voicecloning",
+        purchaseUrl: "https://www.volcengine.com/docs/6561/1167802?lang=zh",
+        description: "支持在火山引擎官方控制台购买音色槽位并接入声音复刻模型 2.0。"
       },
       {
         id: "local-cloned-voice",
@@ -339,6 +486,15 @@ function integrationContract(providers) {
         connected: Boolean(providers.voicebox?.connected),
         configKeys: ["VOICEBOX_URL"],
         optionalConfigKeys: [],
+        detection: {
+          appInstalled: Boolean(providers.voicebox?.appInstalled),
+          modelDownloaded: Boolean(providers.voicebox?.modelDownloaded),
+          modelLoaded: Boolean(providers.voicebox?.modelLoaded),
+          autoDetected: Boolean(providers.voicebox?.autoDetected)
+        },
+        recommendedModel: "Voicebox + Qwen3-TTS 1.7B",
+        downloadUrl: providers.voicebox?.downloadUrl || voiceboxDownloadUrl(),
+        officialUrl: voiceboxOfficialUrl,
         description: "用于连接你自己的本地语音服务，适合私密音色与离线工作流。"
       }
     ],
@@ -619,7 +775,9 @@ async function generateVoiceboxAudio(taskId, payload, voice) {
       language: payload.language === "en" ? "en" : "zh",
       model_size: "1.7B"
     };
-    const generated = await fetch(`${voiceboxUrl}/generate`, {
+    const serviceUrl = discoverVoiceboxServiceUrl();
+    if (!serviceUrl) throw Object.assign(new Error("未检测到本地 Voicebox 服务"), { code: "VOICEBOX_NOT_CONFIGURED" });
+    const generated = await fetch(`${serviceUrl}/generate`, {
       method: "POST",
       signal: AbortSignal.timeout(30_000),
       headers: { "Content-Type": "application/json" },
@@ -724,7 +882,7 @@ async function handleApi(request, response, url) {
     const providers = await providerHealth();
     return sendJson(response, 200, envelope(true, {
       service: "digital-human-studio",
-      version: "0.3.1",
+      version: "0.4.0",
       providers,
       costGuard: { enabled: true, realGenerationRequiresConfirmation: true }
     }, { requestId }));

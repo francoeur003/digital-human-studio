@@ -14,7 +14,11 @@ const child = spawn(process.execPath, ["server.mjs"], {
     ELEVENLABS_API_KEY: "",
     ELEVENLABS_KEY: "",
     XI_API_KEY: "",
+    VOLCENGINE_TTS_APP_ID: "",
+    VOLCENGINE_TTS_ACCESS_TOKEN: "",
+    VOLCENGINE_TTS_VOICE_TYPE: "",
     VOICEBOX_URL: "",
+    VOICEBOX_DISABLE_AUTO_DETECT: "1",
     SEEDANCE_PYTHON: "",
     TOOL_VAULT_PATH: "",
     SEEDANCE_RUNNER: ""
@@ -39,8 +43,13 @@ try {
   const voices = await request("/api/voices");
   if (health.providers.seedance2.connected) throw new Error("public smoke test unexpectedly connected to a video provider");
   if (health.providers.elevenlabs.connected) throw new Error("public smoke test unexpectedly connected to a voice provider");
-  if (integrations.integrations.length !== 3) throw new Error("integration contract must expose exactly three provider requirements");
+  const requiredIntegrations = ["video-generation", "cloud-voice", "volcengine-seed-tts-2", "volcengine-seed-icl-2", "local-cloned-voice"];
+  if (!requiredIntegrations.every((id) => integrations.integrations.some((item) => item.id === id))) throw new Error("integration contract is missing a supported provider");
   if (integrations.integrations.some((item) => item.configured || item.connected)) throw new Error("clean integration contract unexpectedly reports configured providers");
+  const localIntegration = integrations.integrations.find((item) => item.id === "local-cloned-voice");
+  if (!localIntegration.downloadUrl?.startsWith("https://") || localIntegration.detection?.modelDownloaded) throw new Error("local model fallback is not safe or deterministic");
+  const volcengineIntegration = integrations.integrations.find((item) => item.id === "volcengine-seed-tts-2");
+  if (!volcengineIntegration.purchaseUrl?.startsWith("https://www.volcengine.com/")) throw new Error("Volcengine purchase link must use the official domain");
   const integrationJson = JSON.stringify(integrations);
   if (/\/Users\/|\/home\/|api[_-]?key["']?\s*[:=]\s*["'][^"']+/i.test(integrationJson)) throw new Error("integration contract exposed a path or secret value");
   if (avatars.avatars.length < 1 || voices.voices.length < 1) throw new Error("demo catalog missing");

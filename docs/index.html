@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="造人局数字人口播工作台：脚本、数字人、云端声音、本地克隆与 Seedance 2.0 成片工作流。" />
+    <title>造人局 · 数字人口播工作台</title>
+    <link rel="stylesheet" href="site.css" />
+    <link rel="stylesheet" href="mobile.css" />
+  </head>
+  <body>
+    <div class="glow"></div>
+    <header class="nav">
+      <a class="logo" href="#top"><i><span></span><span></span><span></span></i><b>造人局</b><small>DIGITAL HUMAN LAB</small></a>
+      <nav><a href="#cloud">云端声音</a><a href="#local">本地克隆</a><a href="#privacy">隐私</a></nav>
+      <a class="nav-cta" href="https://github.com/francoeur003/digital-human-studio/releases/latest" target="_blank" rel="noreferrer">下载软件 ↗</a>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="eyebrow">PRIVACY-FIRST DIGITAL HUMAN STUDIO</div>
+        <h1>把想法，变成一条<br /><em>能说服人的视频。</em></h1>
+        <p>从口播脚本、人物与声音，到 Seedance 2.0 成片。API 由用户在供应商官网自行购买，密钥只保存在自己的电脑。</p>
+        <div class="hero-actions">
+          <a class="primary" href="https://github.com/francoeur003/digital-human-studio/releases/latest/download/Digital-Human-Studio-0.4.0-macOS-arm64.zip">下载 macOS 版</a>
+          <a class="secondary" href="https://github.com/francoeur003/digital-human-studio" target="_blank" rel="noreferrer">查看开源项目 ↗</a>
+        </div>
+        <div class="hero-shot"><img src="screenshots/hero.png" alt="数字人口播工作台界面" /></div>
+      </section>
+
+      <section class="section" id="cloud">
+        <div class="section-title"><span>01 · CLOUD VOICE</span><h2>云端声音，去官方购买</h2><p>工作台不代售额度，也不会接触你的密钥。选择适合自己的供应商，开通后只在本机配置。</p></div>
+        <div class="cards cloud-cards">
+          <article><div class="card-top"><b>11</b><span>国际多语种</span></div><h3>ElevenLabs</h3><p>适合多语种口播、Voice Library 和云端配音试听。</p><a href="https://elevenlabs.io/pricing" target="_blank" rel="noreferrer">官方价格与购买 ↗</a></article>
+          <article class="featured"><div class="card-top"><b>火</b><span>中文优先</span></div><h3>火山语音大模型</h3><p>支持豆包语音合成大模型，以及更自然、更有表现力的中文配音。</p><a href="https://www.volcengine.com/products/Audio-editing-and-sound-processing" target="_blank" rel="noreferrer">火山引擎官方开通 ↗</a></article>
+          <article><div class="card-top"><b>S2</b><span>2.0 接口</span></div><h3>Seed‑TTS / 声音复刻 2.0</h3><p>支持 Doubao‑Seed‑TTS 2.0 与 Doubao‑Seed‑ICL 2.0 音色能力。</p><a href="https://www.volcengine.com/docs/6561/1167802?lang=zh" target="_blank" rel="noreferrer">官方开通与购买指南 ↗</a></article>
+        </div>
+      </section>
+
+      <section class="local" id="local">
+        <div class="local-copy"><span>02 · LOCAL VOICE</span><h2>本地克隆，自动检测。</h2><p>推荐 Voicebox + Qwen3‑TTS 1.7B。软件会检测 Voicebox 是否安装、模型是否下载、服务是否运行；已就绪就直接连接，未检测到才显示下载入口。</p><ul><li>声音和模型留在本机</li><li>无需订阅，无云端额度</li><li>支持中文、英文等多语种克隆</li></ul><div class="hero-actions"><a class="primary" href="https://github.com/jamiepine/voicebox/releases/download/v0.5.0/Voicebox_0.5.0_aarch64.dmg">Apple 芯片直接下载</a><a class="secondary" href="https://voicebox.sh/download" target="_blank" rel="noreferrer">其他系统官方下载 ↗</a></div></div>
+        <div class="detector"><div class="detector-head"><i></i><span>LOCAL MODEL DETECTOR</span><b>自动运行</b></div><div class="check"><i>✓</i><span><b>Voicebox 应用</b><small>检查系统安装目录</small></span></div><div class="check"><i>✓</i><span><b>Qwen3‑TTS 模型</b><small>检查本地 Hugging Face 缓存</small></span></div><div class="check"><i>✓</i><span><b>本机语音服务</b><small>自动发现运行端口，不公开地址</small></span></div><div class="ready">检测成功后显示：本地模型已就绪</div></div>
+      </section>
+
+      <section class="privacy" id="privacy"><div><span>03 · SECURITY</span><h2>你的密钥，不属于这个项目。</h2></div><p>GitHub、安装包、网页和日志均不保存 API Key、Token、私人节点地址或个人音色。公开接口只返回配置状态布尔值。</p></section>
+    </main>
+
+    <footer><div class="logo"><b>造人局</b><small>DIGITAL HUMAN LAB</small></div><p>开源桌面工作台 · MIT License</p><a href="https://github.com/francoeur003/digital-human-studio" target="_blank" rel="noreferrer">GitHub ↗</a></footer>
+  </body>
+</html>

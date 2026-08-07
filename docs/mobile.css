@@ -1,0 +1,41 @@
+@media (max-width: 760px) {
+  html,
+  body,
+  main,
+  .nav,
+  .hero,
+  .section,
+  .local,
+  .privacy,
+  footer {
+    width: 100vw;
+    max-width: 100vw;
+    min-width: 0;
+  }
+
+  .hero h1,
+  .hero > p,
+  .eyebrow {
+    width: min(350px, calc(100vw - 40px));
+    max-width: min(350px, calc(100vw - 40px));
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  .hero h1 {
+    font-size: 36px;
+  }
+
+  .hero-shot,
+  .hero-shot img,
+  .cards,
+  .cards article,
+  .detector {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .logo {
+    min-width: 92px;
+  }
+}

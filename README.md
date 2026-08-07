@@ -60,10 +60,15 @@ npm start
 | 能力 | 接口 | 要求 |
 | --- | --- | --- |
 | 数字人成片 | Seedance 2.0 生成权限与本机适配器 | 必需 |
-| 云端配音 | ElevenLabs API Key | 推荐 |
-| 本地克隆音色 | Voicebox 服务地址 | 可选 |
+| 云端配音 | ElevenLabs API Key | 可选 |
+| 火山语音 | Doubao-Seed-TTS 2.0 / 声音复刻 2.0 | 可选 |
+| 本地克隆音色 | Voicebox + Qwen3-TTS 1.7B，支持自动检测 | 可选、免费 |
 
 点击软件左下角的“接入说明”，或点击顶部任一供应商状态，即可看到实时连接状态并一键复制接入清单。程序还提供只读的 `GET /api/integrations`，仅返回配置项名称和脱敏状态。完整约定见 [接入说明与公开接口](docs/INTEGRATION-CONTRACT.md)。
+
+官方入口：[项目官网](https://francoeur003.github.io/digital-human-studio/) · [火山语音官方开通](https://www.volcengine.com/products/Audio-editing-and-sound-processing) · [声音复刻 2.0 购买指南](https://www.volcengine.com/docs/6561/1167802?lang=zh) · [Voicebox 官方下载](https://voicebox.sh/download)
+
+![Digital Human Studio 官方网站](docs/screenshots/official-site.png)
 
 ![接入说明：必需、推荐和可选接口](docs/screenshots/integration-guide.png)
 

@@ -214,20 +214,24 @@
             <code>SEEDANCE_PYTHON · TOOL_VAULT_PATH · SEEDANCE_RUNNER</code>
             <span class="integration-status" id="integrationVideoStatus">正在检查</span>
           </article>
-          <article class="integration-card recommended">
-            <header><span class="integration-number">02</span><div><b>云端配音接口</b><small>ElevenLabs</small></div><em>推荐</em></header>
-            <p>加载你的账号音色并生成配音试听；不配置也能浏览演示音色。</p>
-            <code>ELEVENLABS_API_KEY</code>
-            <span class="integration-status" id="integrationVoiceStatus">正在检查</span>
+          <article class="integration-card recommended cloud-provider-card">
+            <header><span class="integration-number">02</span><div><b>云端声音接口</b><small>按需购买自己的 API</small></div><em>多选</em></header>
+            <p>支持 ElevenLabs、火山语音大模型、Doubao‑Seed‑TTS 2.0 与声音复刻 2.0。</p>
+            <div class="provider-buy-list">
+              <a href="https://elevenlabs.io/pricing" target="_blank" rel="noreferrer"><span>ElevenLabs</span><b>官方购买 ↗</b></a>
+              <a href="https://www.volcengine.com/products/Audio-editing-and-sound-processing" target="_blank" rel="noreferrer"><span>火山语音大模型</span><b>官方开通 ↗</b></a>
+              <a href="https://www.volcengine.com/docs/6561/1167802?lang=zh" target="_blank" rel="noreferrer"><span>Seed‑TTS / 声音复刻 2.0</span><b>购买指南 ↗</b></a>
+            </div>
+            <div class="integration-status-row"><span class="integration-status" id="integrationVoiceStatus">正在检查</span><span class="integration-status" id="integrationVolcStatus">正在检查</span></div>
           </article>
           <article class="integration-card optional">
-            <header><span class="integration-number">03</span><div><b>本地克隆音色</b><small>Voicebox</small></div><em>可选</em></header>
-            <p>连接你自己的本地语音服务，适合私密音色与离线工作流。</p>
-            <code>VOICEBOX_URL</code>
+            <header><span class="integration-number">03</span><div><b>本地克隆音色</b><small>Voicebox + Qwen3‑TTS</small></div><em>免费</em></header>
+            <p id="localModelHint">正在检测应用、本地模型与运行服务。</p>
+            <a class="model-download hidden" id="localModelDownload" href="https://voicebox.sh/download" target="_blank" rel="noreferrer">直接下载本地模型 ↗</a>
             <span class="integration-status" id="integrationLocalStatus">正在检查</span>
           </article>
         </div>
-        <div class="integration-privacy"><i>◇</i><span><b>密钥只留在本机</b><small>不要把 API Key、Token 或私人节点地址发给别人，也不要提交到 GitHub。</small></span></div>
+        <div class="integration-privacy"><i>◇</i><span><b>密钥只留在本机</b><small>购买和开通都在供应商官方网站完成；不要把 API Key、Token 或私人节点地址发给别人。</small></span></div>
         <div class="modal-actions"><button data-integration-modal-close>稍后配置</button><button id="copyIntegrationChecklist">复制接入清单</button></div>
       </section>
     </div>

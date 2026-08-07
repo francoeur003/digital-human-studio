@@ -105,7 +105,7 @@ async function loadHealth() {
     const voicebox = data.providers.voicebox;
     setProvider($("#seedanceStatus"), seedance.connected ? "connected" : "error", seedance.connected ? "API 已连接" : seedance.state === "unauthorized" ? "需重新授权" : "不可用");
     setProvider($("#elevenStatus"), eleven.connected ? "connected" : "error", eleven.connected ? "API 已连接" : "需配置");
-    setProvider($("#voiceboxStatus"), voicebox?.connected ? "connected" : "warning", voicebox?.connected ? "本机已连接" : voicebox?.configured ? "未连接" : "未配置");
+    setProvider($("#voiceboxStatus"), voicebox?.connected ? "connected" : "warning", voicebox?.connected ? (voicebox.autoDetected ? "自动检测已连接" : "本机已连接") : voicebox?.modelDownloaded ? "模型已检测" : voicebox?.appInstalled ? "应用已安装" : "未安装");
     $("#cliHint").textContent = seedance.connected
       ? `Seedance 2.0 API 已就绪${seedance.walletBalance ? ` · 剩余 ${seedance.walletBalance} 点` : ""}`
       : "配置你自己的生成通道后即可使用";
@@ -137,9 +137,33 @@ async function loadIntegrations() {
     state.integrations = data.integrations || [];
     renderIntegrationStatus("video-generation", "#integrationVideoStatus");
     renderIntegrationStatus("cloud-voice", "#integrationVoiceStatus");
-    renderIntegrationStatus("local-cloned-voice", "#integrationLocalStatus");
+    const volcengine = state.integrations.find((entry) => entry.id === "volcengine-seed-tts-2");
+    const volcStatus = $("#integrationVolcStatus");
+    volcStatus.className = `integration-status ${volcengine?.configured ? "connected" : "missing"}`;
+    volcStatus.textContent = volcengine?.configured ? "火山已配置" : "火山可选购";
+    const local = state.integrations.find((entry) => entry.id === "local-cloned-voice");
+    const localStatus = $("#integrationLocalStatus");
+    const localHint = $("#localModelHint");
+    const download = $("#localModelDownload");
+    if (local?.connected) {
+      localStatus.className = "integration-status connected";
+      localStatus.textContent = local.detection?.autoDetected ? "已自动检测并连接" : "已连接";
+      localHint.textContent = local.detection?.modelLoaded ? "本地模型已加载，可以直接生成克隆配音。" : "Voicebox 已运行，首次生成时会加载本地模型。";
+      download.classList.add("hidden");
+    } else if (local?.detection?.modelDownloaded) {
+      localStatus.className = "integration-status connected";
+      localStatus.textContent = "本地模型已检测";
+      localHint.textContent = "已找到 Qwen3‑TTS 模型，请启动 Voicebox 后再刷新。";
+      download.classList.add("hidden");
+    } else {
+      localStatus.className = "integration-status missing";
+      localStatus.textContent = local?.detection?.appInstalled ? "应用已安装，模型未下载" : "未检测到本地模型";
+      localHint.textContent = "推荐 Voicebox + Qwen3‑TTS 1.7B；安装后首次生成会自动下载模型。";
+      download.href = local?.downloadUrl || "https://voicebox.sh/download";
+      download.classList.remove("hidden");
+    }
   } catch (error) {
-    ["#integrationVideoStatus", "#integrationVoiceStatus", "#integrationLocalStatus"].forEach((selector) => {
+    ["#integrationVideoStatus", "#integrationVoiceStatus", "#integrationVolcStatus", "#integrationLocalStatus"].forEach((selector) => {
       $(selector).className = "integration-status error";
       $(selector).textContent = "检查失败";
     });
@@ -488,8 +512,11 @@ function closeIntegrationModal() {
 async function copyIntegrationChecklist() {
   const checklist = `使用“造人局·数字人口播工作台”需要准备：
 1. 视频生成：Seedance 2.0 生成权限与本机适配器（必需）
-2. 云端配音：ElevenLabs API Key（推荐）
-3. 本地克隆音色：Voicebox 服务地址（可选）
+2. 云端配音任选：ElevenLabs、火山语音大模型、Doubao-Seed-TTS 2.0 / 声音复刻 2.0
+   火山官方开通：https://www.volcengine.com/products/Audio-editing-and-sound-processing
+   声音复刻购买指南：https://www.volcengine.com/docs/6561/1167802?lang=zh
+3. 本地克隆音色：Voicebox + Qwen3-TTS 1.7B（免费、可选）
+   官方下载：https://voicebox.sh/download
 
 请只在自己的电脑上配置，不要把 API Key、Token 或私人节点地址发给别人，也不要提交到 GitHub。`;
   try {

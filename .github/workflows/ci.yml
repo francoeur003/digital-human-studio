@@ -26,4 +26,4 @@ jobs:
           test ! -e config/avatars.json
           test ! -e config/local-voices.json
           test ! -e data/tasks.json
-          ! git grep -nE '(/Users/|gho_[A-Za-z0-9]+|sk-[A-Za-z0-9]{20,}|xi-api-key[[:space:]]*:[[:space:]]*[A-Za-z0-9])'
+          ! git grep -nE '(/Users/|gho_[A-Za-z0-9]+|sk-[A-Za-z0-9]{20,}|xi-api-key[[:space:]]*:[[:space:]]*[A-Za-z0-9])' -- ':!.github/workflows/ci.yml'

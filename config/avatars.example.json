@@ -1,0 +1,9 @@
+{
+  "source": "demo-only",
+  "avatars": [
+    { "id": "demo-lin", "name": "Lin", "image": "/demo/avatar-lin.svg", "source": "demo", "orientation": "portrait" },
+    { "id": "demo-mira", "name": "Mira", "image": "/demo/avatar-mira.svg", "source": "demo", "orientation": "portrait" },
+    { "id": "demo-noah", "name": "Noah", "image": "/demo/avatar-noah.svg", "source": "demo", "orientation": "portrait" },
+    { "id": "demo-aya", "name": "Aya", "image": "/demo/avatar-aya.svg", "source": "demo", "orientation": "portrait" }
+  ]
+}

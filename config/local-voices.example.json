@@ -1,0 +1,28 @@
+{
+  "voices": [
+    {
+      "id": "demo-voice-warm",
+      "provider": "demo",
+      "name": "Warm Narrator",
+      "category": "demo",
+      "description": "A visual placeholder for your own voice profile.",
+      "labels": { "language": "zh", "accent": "Mandarin", "use_case": "Talking head" },
+      "owned": false,
+      "local": true,
+      "ttsReady": false,
+      "statusNote": "Demo profile · configure your own provider to generate audio"
+    },
+    {
+      "id": "demo-voice-clear",
+      "provider": "demo",
+      "name": "Clear Presenter",
+      "category": "demo",
+      "description": "A visual placeholder for a crisp presenter voice.",
+      "labels": { "language": "en", "accent": "Neutral", "use_case": "Presenter" },
+      "owned": false,
+      "local": true,
+      "ttsReady": false,
+      "statusNote": "Demo profile · no audio or voice ID is bundled"
+    }
+  ]
+}

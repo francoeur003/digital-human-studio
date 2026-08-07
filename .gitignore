@@ -1,0 +1,23 @@
+node_modules/
+release/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+assets/icon.iconset/
+
+# Private provider catalogs and local node configuration
+config/avatars.json
+config/local-voices.json
+
+# Personal media, task history and generated output
+data/custom-avatars.json
+data/custom-voices.json
+data/tasks.json
+data/uploads/*
+!data/uploads/.gitkeep
+data/outputs/*
+!data/outputs/.gitkeep
+data/seedance-runs/*
+!data/seedance-runs/.gitkeep

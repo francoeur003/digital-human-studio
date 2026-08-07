@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Verify private files are absent
+        shell: bash
+        run: |
+          test ! -e .env
+          test ! -e config/avatars.json
+          test ! -e config/local-voices.json
+          test ! -e data/tasks.json
+          ! git grep -nE '(/Users/|gho_[A-Za-z0-9]+|sk-[A-Za-z0-9]{20,}|xi-api-key[[:space:]]*:[[:space:]]*[A-Za-z0-9])'

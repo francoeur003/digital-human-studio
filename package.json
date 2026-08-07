@@ -1,0 +1,32 @@
+{
+  "name": "digital-human-studio",
+  "version": "0.3.0",
+  "description": "A privacy-first desktop workbench for scripting, avatar selection, voice references and AI talking-head video generation.",
+  "type": "module",
+  "main": "desktop.mjs",
+  "author": "francoeur003",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/francoeur003/digital-human-studio.git"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "app": "electron .",
+    "check": "node --check server.mjs && node --check desktop.mjs && node --check public/app.js",
+    "test": "npm run check && npm run smoke",
+    "smoke": "node scripts/smoke.mjs",
+    "build:mac": "electron-packager . 'Digital Human Studio' --platform=darwin --arch=arm64 --out=release --overwrite --prune=true --asar --app-bundle-id=studio.zaorenju.desktop --app-category-type=public.app-category.video --app-version=0.3.0 --icon=assets/icon.icns --ignore='^/(release|docs/screenshots|data/outputs|data/uploads|data/seedance-runs|config/avatars\\.json|config/local-voices\\.json|\\.env)$' && codesign --force --deep --sign - 'release/Digital Human Studio-darwin-arm64/Digital Human Studio.app'",
+    "dist:mac": "npm run build:mac && ditto -c -k --sequesterRsrc --keepParent 'release/Digital Human Studio-darwin-arm64/Digital Human Studio.app' 'release/Digital-Human-Studio-0.3.0-macOS-arm64.zip'"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@electron/packager": "20.0.4",
+    "electron": "39.8.10"
+  },
+  "allowScripts": {
+    "electron@39.8.10": true
+  }
+}

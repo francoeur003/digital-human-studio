@@ -34,10 +34,15 @@ async function request(path, options) {
 try {
   await wait(500);
   const health = await request("/api/health");
+  const integrations = await request("/api/integrations");
   const avatars = await request("/api/avatars");
   const voices = await request("/api/voices");
   if (health.providers.seedance2.connected) throw new Error("public smoke test unexpectedly connected to a video provider");
   if (health.providers.elevenlabs.connected) throw new Error("public smoke test unexpectedly connected to a voice provider");
+  if (integrations.integrations.length !== 3) throw new Error("integration contract must expose exactly three provider requirements");
+  if (integrations.integrations.some((item) => item.configured || item.connected)) throw new Error("clean integration contract unexpectedly reports configured providers");
+  const integrationJson = JSON.stringify(integrations);
+  if (/\/Users\/|\/home\/|api[_-]?key["']?\s*[:=]\s*["'][^"']+/i.test(integrationJson)) throw new Error("integration contract exposed a path or secret value");
   if (avatars.avatars.length < 1 || voices.voices.length < 1) throw new Error("demo catalog missing");
 
   const custom = await request("/api/avatars/custom", {
@@ -101,6 +106,7 @@ try {
     providersConnected: false,
     demoAvatars: avatars.avatars.length,
     demoVoices: voices.voices.length,
+    integrationRequirements: integrations.integrations.length,
     customAvatarUpload: customImage.status,
     promptPreview: promptPreview.prompt.length,
     costGate: costGate.errorCode,

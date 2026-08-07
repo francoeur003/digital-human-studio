@@ -31,7 +31,7 @@
 
         <div class="side-bottom">
           <button class="side-link" id="openTasks"><span>⌁</span>任务记录 <b id="taskBadge">0</b></button>
-          <button class="side-link"><span>?</span>使用说明</button>
+          <button class="side-link" id="openIntegrations"><span>◇</span>接入说明</button>
           <div class="account"><span>LOCAL</span><div><b>本机项目</b><small>私密数据不出本机</small></div><i></i></div>
         </div>
       </aside>
@@ -195,6 +195,40 @@
         <label class="avatar-name-field">Voice ID<input id="customVoiceId" maxlength="64" autocomplete="off" placeholder="例如：21m00Tcm4TlvDq8ikWAM" /></label>
         <div class="avatar-privacy"><i>◇</i><span><b>只保存引用</b><small>这里只保存 Voice ID 和名称，不上传音频，也不会触发付费生成。</small></span></div>
         <div class="modal-actions"><button data-voice-modal-close>取消</button><button id="saveCustomVoice">校验并加入</button></div>
+      </section>
+    </div>
+
+    <div class="modal integration-modal" id="integrationModal" aria-hidden="true">
+      <div class="modal-backdrop" data-integration-modal-close></div>
+      <section>
+        <div class="integration-head">
+          <div class="modal-icon integration-icon">API</div>
+          <div><span class="eyebrow">INTEGRATION GUIDE</span><h2>接入这些接口即可开始创作</h2></div>
+          <button class="integration-close" data-integration-modal-close aria-label="关闭">×</button>
+        </div>
+        <p class="integration-intro">软件会自动检查连接状态。你只需要在自己的电脑上配置，不用把密钥发给开发者。</p>
+        <div class="integration-grid">
+          <article class="integration-card required">
+            <header><span class="integration-number">01</span><div><b>视频生成接口</b><small>Seedance 2.0</small></div><em>必需</em></header>
+            <p>生成数字人口播成片，需要你自己的生成权限与本机适配器。</p>
+            <code>SEEDANCE_PYTHON · TOOL_VAULT_PATH · SEEDANCE_RUNNER</code>
+            <span class="integration-status" id="integrationVideoStatus">正在检查</span>
+          </article>
+          <article class="integration-card recommended">
+            <header><span class="integration-number">02</span><div><b>云端配音接口</b><small>ElevenLabs</small></div><em>推荐</em></header>
+            <p>加载你的账号音色并生成配音试听；不配置也能浏览演示音色。</p>
+            <code>ELEVENLABS_API_KEY</code>
+            <span class="integration-status" id="integrationVoiceStatus">正在检查</span>
+          </article>
+          <article class="integration-card optional">
+            <header><span class="integration-number">03</span><div><b>本地克隆音色</b><small>Voicebox</small></div><em>可选</em></header>
+            <p>连接你自己的本地语音服务，适合私密音色与离线工作流。</p>
+            <code>VOICEBOX_URL</code>
+            <span class="integration-status" id="integrationLocalStatus">正在检查</span>
+          </article>
+        </div>
+        <div class="integration-privacy"><i>◇</i><span><b>密钥只留在本机</b><small>不要把 API Key、Token 或私人节点地址发给别人，也不要提交到 GitHub。</small></span></div>
+        <div class="modal-actions"><button data-integration-modal-close>稍后配置</button><button id="copyIntegrationChecklist">复制接入清单</button></div>
       </section>
     </div>
 

@@ -298,6 +298,61 @@ async function providerHealth() {
   };
 }
 
+function integrationContract(providers) {
+  return {
+    privacy: {
+      localOnly: true,
+      message: "请只在自己的电脑上配置凭据。不要把 API Key、Token 或私人节点地址发给别人，也不要提交到 GitHub。"
+    },
+    integrations: [
+      {
+        id: "video-generation",
+        name: "视频生成接口",
+        provider: "Seedance 2.0",
+        requirement: "required",
+        requirementLabel: "必需",
+        configured: Boolean(providers.seedance2?.configured),
+        connected: Boolean(providers.seedance2?.connected),
+        configKeys: ["SEEDANCE_PYTHON", "TOOL_VAULT_PATH", "SEEDANCE_RUNNER"],
+        optionalConfigKeys: ["SEEDANCE_MODEL"],
+        description: "用于提交数字人口播视频生成任务；需要你自己的生成权限与本机适配器。"
+      },
+      {
+        id: "cloud-voice",
+        name: "云端配音接口",
+        provider: "ElevenLabs",
+        requirement: "recommended",
+        requirementLabel: "推荐",
+        configured: Boolean(providers.elevenlabs?.configured),
+        connected: Boolean(providers.elevenlabs?.connected),
+        configKeys: ["ELEVENLABS_API_KEY"],
+        optionalConfigKeys: [],
+        description: "用于加载账号音色与生成配音试听；不配置也可以浏览演示音色。"
+      },
+      {
+        id: "local-cloned-voice",
+        name: "本地克隆音色",
+        provider: "Voicebox",
+        requirement: "optional",
+        requirementLabel: "可选",
+        configured: Boolean(providers.voicebox?.configured),
+        connected: Boolean(providers.voicebox?.connected),
+        configKeys: ["VOICEBOX_URL"],
+        optionalConfigKeys: [],
+        description: "用于连接你自己的本地语音服务，适合私密音色与离线工作流。"
+      }
+    ],
+    appApi: [
+      { method: "GET", path: "/api/health", purpose: "服务与供应商状态" },
+      { method: "GET", path: "/api/integrations", purpose: "接入要求与脱敏状态" },
+      { method: "GET", path: "/api/avatars", purpose: "数字人目录" },
+      { method: "GET", path: "/api/voices", purpose: "音色目录" },
+      { method: "POST", path: "/api/tasks", purpose: "创建生成或检查任务" },
+      { method: "GET", path: "/api/tasks/{id}", purpose: "查询长任务状态" }
+    ]
+  };
+}
+
 function avatarById(id) {
   const presets = loadAvatarCatalog().avatars;
   return [...loadCustomAvatars(), ...presets].find((avatar) => avatar.id === id) || null;
@@ -669,10 +724,15 @@ async function handleApi(request, response, url) {
     const providers = await providerHealth();
     return sendJson(response, 200, envelope(true, {
       service: "digital-human-studio",
-      version: "0.3.0",
+      version: "0.3.1",
       providers,
       costGuard: { enabled: true, realGenerationRequiresConfirmation: true }
     }, { requestId }));
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/integrations") {
+    const providers = await providerHealth();
+    return sendJson(response, 200, envelope(true, integrationContract(providers), { requestId }));
   }
 
   if (request.method === "GET" && url.pathname === "/api/avatars") {

@@ -10,6 +10,7 @@ const state = {
   settings: { captions: true, eyeContact: true, music: false, motion: true },
   tasks: new Map(),
   health: null,
+  integrations: [],
   sampleAudio: new Audio(),
   pendingAvatarFile: null,
   pendingAvatarData: "",
@@ -112,6 +113,36 @@ async function loadHealth() {
     setProvider($("#seedanceStatus"), "error", "检查失败");
     setProvider($("#elevenStatus"), "error", "检查失败");
     toast("连接检查失败", error.message, "error");
+  }
+}
+
+function integrationStatus(item) {
+  if (!item) return { label: "尚未检查", mode: "" };
+  if (item.connected) return { label: "已连接", mode: "connected" };
+  if (item.configured) return { label: "已配置，连接失败", mode: "error" };
+  return { label: "等待配置", mode: "missing" };
+}
+
+function renderIntegrationStatus(id, nodeId) {
+  const item = state.integrations.find((entry) => entry.id === id);
+  const status = integrationStatus(item);
+  const node = $(nodeId);
+  node.className = `integration-status ${status.mode}`;
+  node.textContent = status.label;
+}
+
+async function loadIntegrations() {
+  try {
+    const { data } = await api("/api/integrations");
+    state.integrations = data.integrations || [];
+    renderIntegrationStatus("video-generation", "#integrationVideoStatus");
+    renderIntegrationStatus("cloud-voice", "#integrationVoiceStatus");
+    renderIntegrationStatus("local-cloned-voice", "#integrationLocalStatus");
+  } catch (error) {
+    ["#integrationVideoStatus", "#integrationVoiceStatus", "#integrationLocalStatus"].forEach((selector) => {
+      $(selector).className = "integration-status error";
+      $(selector).textContent = "检查失败";
+    });
   }
 }
 
@@ -443,6 +474,38 @@ function closeVoiceModal() {
   $("#voiceModal").setAttribute("aria-hidden", "true");
 }
 
+function openIntegrationModal() {
+  $("#integrationModal").classList.add("open");
+  $("#integrationModal").setAttribute("aria-hidden", "false");
+  loadIntegrations();
+}
+
+function closeIntegrationModal() {
+  $("#integrationModal").classList.remove("open");
+  $("#integrationModal").setAttribute("aria-hidden", "true");
+}
+
+async function copyIntegrationChecklist() {
+  const checklist = `使用“造人局·数字人口播工作台”需要准备：
+1. 视频生成：Seedance 2.0 生成权限与本机适配器（必需）
+2. 云端配音：ElevenLabs API Key（推荐）
+3. 本地克隆音色：Voicebox 服务地址（可选）
+
+请只在自己的电脑上配置，不要把 API Key、Token 或私人节点地址发给别人，也不要提交到 GitHub。`;
+  try {
+    await navigator.clipboard.writeText(checklist);
+    toast("接入清单已复制", "可以直接发给安装或技术人员", "success");
+  } catch {
+    const field = document.createElement("textarea");
+    field.value = checklist;
+    document.body.append(field);
+    field.select();
+    document.execCommand("copy");
+    field.remove();
+    toast("接入清单已复制", "可以直接发给安装或技术人员", "success");
+  }
+}
+
 async function saveCustomVoice() {
   const voiceId = $("#customVoiceId").value.trim();
   if (!voiceId) return toast("还没有 Voice ID", "请粘贴 ElevenLabs Voice ID", "error");
@@ -567,8 +630,12 @@ $$('[data-modal-close]').forEach((button) => button.addEventListener("click", cl
 $$('[data-video-modal-close]').forEach((button) => button.addEventListener("click", closeVideoModal));
 $$('[data-avatar-modal-close]').forEach((button) => button.addEventListener("click", closeAvatarModal));
 $$('[data-voice-modal-close]').forEach((button) => button.addEventListener("click", closeVoiceModal));
+$$('[data-integration-modal-close]').forEach((button) => button.addEventListener("click", closeIntegrationModal));
 
 $("#openTasks").addEventListener("click", openDrawer);
+$("#openIntegrations").addEventListener("click", openIntegrationModal);
+[$("#seedanceStatus"), $("#elevenStatus"), $("#voiceboxStatus")].forEach((button) => button.addEventListener("click", openIntegrationModal));
+$("#copyIntegrationChecklist").addEventListener("click", copyIntegrationChecklist);
 $("#addAvatarText").addEventListener("click", openAvatarModal);
 $("#addVoiceText").addEventListener("click", openVoiceModal);
 $("#avatarDropzone").addEventListener("click", () => $("#avatarFile").click());
@@ -646,10 +713,11 @@ $("#similarity").addEventListener("input", (event) => { $("#similarityValue").te
 $("#speed").addEventListener("input", (event) => { $("#speedValue").textContent = `${(event.target.value / 100).toFixed(2)}×`; });
 document.addEventListener("keydown", (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key === "Enter") openVideoModal();
-  if (event.key === "Escape") { closeDrawer(); closeModal(); closeVideoModal(); closeAvatarModal(); closeVoiceModal(); }
+  if (event.key === "Escape") { closeDrawer(); closeModal(); closeVideoModal(); closeAvatarModal(); closeVoiceModal(); closeIntegrationModal(); }
 });
 
 loadLocal();
 calculateMeta();
 setRatio(state.ratio);
-Promise.allSettled([loadHealth(), loadAvatars(), loadVoices()]);
+Promise.allSettled([loadHealth(), loadIntegrations(), loadAvatars(), loadVoices()]);
+if (new URLSearchParams(location.search).get("setup") === "1") openIntegrationModal();
